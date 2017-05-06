@@ -1,18 +1,21 @@
-sudo: false
+before_install:
+- wget https://dl.dropboxusercontent.com/u/7897865/apache-maven-3.3.9.zip
+- unzip -qq apache-maven-3.3.9.zip
+- export M2_HOME=$PWD/apache-maven-3.3.9
+- export PATH=$M2_HOME/bin:$PATH
+- rm ~/.m2/settings.xml
 cache:
   directories:
-    - "$HOME/.m2"
-language: java
-before_install:
-  - wget https://dl.dropboxusercontent.com/u/7897865/apache-maven-3.3.9.zip
-  - unzip -qq apache-maven-3.3.9.zip
-  - export M2_HOME=$PWD/apache-maven-3.3.9
-  - export PATH=$M2_HOME/bin:$PATH
-  - rm ~/.m2/settings.xml
-script:
-  - mvn -f src/pom.xml -B -U -T2 -fae -Prelease clean install && mvn -f src/community/pom.xml -B -U -T2 -fae -DskipTests -Prelease -PcommunityRelease clean install
-notifications:
-  email:
-    on_success: never
-    on_failure: never
+  - $HOME/.m2
 jdk: oraclejdk8
+language: java
+notifications:
+  email: false
+  slack:
+    rooms: flakycov:U2MeVOPjdi4up1U793ubeIUZ
+    template:
+    - Build <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) of %{repository}@%{branch} by %{author} %{result} in %{duration}
+    - 'dashbot: %{repository_name} %{build_id}'
+script:
+- mvn -f src/pom.xml -B -U -T2 -fae -Prelease clean install && mvn -f src/community/pom.xml -B -U -T2 -fae -DskipTests -Prelease -PcommunityRelease clean install
+sudo: false
