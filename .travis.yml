@@ -9,6 +9,8 @@ cache:
   - $HOME/.m2
 jdk: oraclejdk8
 language: java
+script:
+  - mvn -f src/pom.xml -B -U -T1C -fae -Prelease clean install && mvn -f src/community/pom.xml -B -U -T2 -fae -DskipTests -Prelease -PcommunityRelease clean install
 notifications:
   email: false
   slack:
@@ -16,6 +18,4 @@ notifications:
     template:
     - Build <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) of %{repository}@%{branch} by %{author} %{result} in %{duration}
     - 'dashbot: %{repository_name} %{build_id}'
-script:
-- mvn -f src/pom.xml -B -U -T2 -fae -Prelease clean install && mvn -f src/community/pom.xml -B -U -T2 -fae -DskipTests -Prelease -PcommunityRelease clean install
 sudo: false
