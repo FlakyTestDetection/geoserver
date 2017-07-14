@@ -7,6 +7,7 @@ package org.geogig.geoserver.config;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -76,7 +77,7 @@ public class RepositoryManagerTest extends GeoServerSystemTestSupport {
     @Test
     public void testGet() {
         assertNotNull(repoManager);
-        RepositoryManager repoManager2 = RepositoryManager.supplier().get();
+        RepositoryManager repoManager2 = RepositoryManager.get();
         assertNotNull(repoManager2);
         assertEquals(repoManager, repoManager2);
     }
@@ -136,7 +137,7 @@ public class RepositoryManagerTest extends GeoServerSystemTestSupport {
             fail();
         } catch (NoSuchElementException e) {
             // expected;
-            assertEquals("No repository with ID " + randomUUID + " exists", e.getMessage());
+            assertEquals("Repository not found: " + randomUUID, e.getMessage());
         }
 
         info1Get = repoManager.getByRepoName("repo1");
@@ -144,13 +145,8 @@ public class RepositoryManagerTest extends GeoServerSystemTestSupport {
         assertEquals(info1, info1Get);
         assertEquals(info2, info2Get);
 
-        try {
-            repoManager.getByRepoName("nonexistent");
-            fail();
-        } catch (NoSuchElementException e) {
-            // expected;
-            assertEquals("No repository with name nonexistent exists", e.getMessage());
-        }
+        RepositoryInfo rpoByName = repoManager.getByRepoName("nonexistent");
+        assertNull("Expected repository to be non-existent", rpoByName);
     }
     
     @Test
@@ -163,7 +159,9 @@ public class RepositoryManagerTest extends GeoServerSystemTestSupport {
             fail();
         } catch (IllegalArgumentException e) {
             //expected
-            assertEquals("Unsupported repository URI scheme: unknown", e.getMessage());
+            assertEquals(
+                    "No repository initializer found capable of handling this kind of URI: unknown://repo1",
+                    e.getMessage());
         }
     }
     
@@ -319,13 +317,8 @@ public class RepositoryManagerTest extends GeoServerSystemTestSupport {
         infoGet = repoManager.getByRepoName("repo1_renamed");
         assertEquals(renamed, infoGet);
         
-        try {
-            repoManager.getByRepoName("repo1");
-            fail();
-        } catch (NoSuchElementException e) {
-            // expected;
-            assertEquals("No repository with name repo1 exists", e.getMessage());
-        }
+        RepositoryInfo repoByName = repoManager.getByRepoName("repo1");
+        assertNull("Expected \"repo1\" to be non-existent", repoByName);
     }
     
     @Test
@@ -439,20 +432,16 @@ public class RepositoryManagerTest extends GeoServerSystemTestSupport {
         repositoryInfos = repoManager.getAll();
         assertEquals(0, repositoryInfos.size());
         
-        try {
-            repoManager.getByRepoName("repo1");
-            fail();
-        } catch (NoSuchElementException e) {
-            // expected;
-            assertEquals("No repository with name repo1 exists", e.getMessage());
-        }
+        RepositoryInfo repoByName = repoManager.getByRepoName("repo1");
+        assertNull("Expected \"repo1\" to be non-existent", repoByName);
         
         try {
             repoManager.getRepository(info.getId());
             fail();
         } catch (Exception e) {
+            e.printStackTrace();
             //expected
-            assertTrue(e.getMessage().contains("No repository with ID " + info.getId() + " exists"));
+            assertTrue(e.getMessage().contains("Repository not found: " + info.getId()));
         }
         
         geogigDataStores = repoManager.findGeogigStores();
@@ -516,6 +505,20 @@ public class RepositoryManagerTest extends GeoServerSystemTestSupport {
             assertTrue(e.getMessage().startsWith("Unable to connect: "));
             assertTrue(e.getMessage().contains("not a geogig repository"));
         }
+    }
+
+    @Test
+    public void testCreate() throws Exception {
+        File repoFolder = new File(testData.getDataDirectoryRoot(), "someRepoName");
+        URI uri = repoFolder.toURI();
+        RepositoryInfo repoInfo = new RepositoryInfo();
+        repoInfo.setLocation(uri);
+        // now call save() with the RepositoryInfo
+        // since the repo doesn't exist, save() should try to create it
+        RepositoryInfo savedInfo = RepositoryManager.get().save(repoInfo);
+        assertNotNull(savedInfo);
+        // make sure it's retrievable as well
+        assertNotNull(RepositoryManager.get().getByRepoName("someRepoName"));
     }
 
     private RepositoryInfo saveRepository(Repository repo) {
