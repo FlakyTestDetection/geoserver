@@ -663,9 +663,16 @@ public class Capabilities_1_3_0_Transformer extends TransformerBase {
             final Catalog catalog = wmsConfig.getCatalog();
                         
             WMSInfo serviceInfo = wmsConfig.getServiceInfo();
-            element("Title", serviceInfo.getTitle());
-            element("Abstract", serviceInfo.getAbstract());
-
+            if(StringUtils.isBlank(serviceInfo.getRootLayerTitle())) {
+            	element("Title", serviceInfo.getTitle());            	
+            } else {
+            	element("Title", serviceInfo.getRootLayerTitle());
+            }
+            if(StringUtils.isBlank(serviceInfo.getRootLayerAbstract())) {
+              element("Abstract", serviceInfo.getAbstract());
+            } else {
+              element("Abstract", serviceInfo.getRootLayerAbstract());
+            }
             List<String> srsList = serviceInfo.getSRS();
             Set<String> srs = new LinkedHashSet<String>();
             if (srsList != null) {
@@ -1000,6 +1007,8 @@ public class Capabilities_1_3_0_Transformer extends TransformerBase {
                 dimensionHelper.handleVectorLayerDimensions(layer);
             } else if (layer.getType() == PublishedType.RASTER) {
                 dimensionHelper.handleRasterLayerDimensions(layer);
+            } else if (layer.getType() == PublishedType.WMTS) {
+                dimensionHelper.handleWMTSLayerDimensions(layer);
             }
 
             // handle data attribution
