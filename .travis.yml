@@ -4,6 +4,7 @@ before_install:
 - export M2_HOME=$PWD/apache-maven-3.3.9
 - export PATH=$M2_HOME/bin:$PATH
 - rm ~/.m2/settings.xml
+- unset _JAVA_OPTIONS
 dist: trusty
 cache:
   directories:
@@ -13,7 +14,6 @@ language: java
 env:
   global:
     - MAVEN_OPTS=-Xmx512m
-    - _JAVA_OPTIONS=
 script:
   - mvn -f src/pom.xml -B -U -T4 -fae -Prelease clean install && mvn -f src/community/pom.xml -B -U -T4 -fae -DskipTests -Prelease -PcommunityRelease clean install
 notifications:
