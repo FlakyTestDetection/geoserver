@@ -164,8 +164,8 @@ public class StyleAdminPanel extends StyleEditTabPanel {
 
         add(wsChoice);
         
-        //always disable the workspace toggle if not admin
-        if (!stylePage.isAuthenticatedAsAdmin()) {
+        //disable the workspace toggle on edit if not admin (can only be set upon creation)
+        if (stylePage instanceof StyleEditPage && !stylePage.isAuthenticatedAsAdmin()) {
             wsChoice.setEnabled(false);
         }
 
@@ -435,6 +435,7 @@ public class StyleAdminPanel extends StyleEditTabPanel {
                         // same here, force validation or the field won't be updated
                         stylePage.editor.reset();
                         stylePage.setRawStyle(stylePage.readFile(style));
+                        stylePage.getStyleInfo().setFormat(style.getFormat());
                         target.appendJavaScript(String.format(
                                 "if (document.gsEditors) { document.gsEditors.editor.setOption('mode', '%s'); }", 
                                 stylePage.styleHandler().getCodeMirrorEditMode()));
